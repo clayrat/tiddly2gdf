@@ -1,0 +1,9 @@
+nodedef>name VARCHAR
+s1
+s2
+s3
+edgedef>node1 VARCHAR,node2 VARCHAR,directed BOOLEAN,color VARCHAR
+s1,s2,true,'0,0,0'
+s2,s3,true,'0,0,0'
+s3,s2,true,'0,0,0'
+s3,s1,true,'255,255,0'
