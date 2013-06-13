@@ -5,44 +5,42 @@ import java.net.URL
 
 object main {
 
+  val tagColor = "'0,0,0'"
+  val linkColor = "'0,100,100'"
+
+  def monoidify(s: String): String = if (s == null) "" else s
+
+  def stripLink(l: String) =
+    (if (l.contains("|"))
+      l.dropWhile(_ != '|').stripPrefix("|")
+    else
+      l.stripPrefix("[["))
+      .stripSuffix("]]")
+
   def getGraphFromUrl(url: String): (List[String], List[String]) = {
     val nodes = new ListBuffer[String]()
     val edges = new ListBuffer[String]()
-    val cleaner = new HtmlCleaner
-    val props = cleaner.getProperties
-    val rootNode = cleaner.clean(new URL(url))
-    val elements = rootNode.getElementsByName("div", true)
-    val pattern = new Regex("\\[\\[[^\\]^:]+\\]\\]")
-    for (elem <- elements) {
+    (new HtmlCleaner).clean(new URL(url)).getElementsByName("div", true).foreach { elem =>
       val title = elem.getAttributeByName("title")
       nodes += title
-      val tags = elem.getAttributeByName("tags")
-      val tags2 = if (tags == null) "" else tags
-      for (tag <- tags2.split(" ")) {
-        edges += title + "," + tag + ",true,'0,0,0'"
+      monoidify(elem.getAttributeByName("tags")).split(" ").foreach { tag =>
+        edges += List(title, tag, "true", tagColor).mkString(",")
       }
-      val links = (pattern findAllIn elem.getText)
-      for (link <- links) {
-        val srlink = if (link.contains("|")) link.dropWhile(c => c != '|').stripPrefix("|") else link.stripPrefix("[[")
-        edges += title + "," + srlink.stripSuffix("]]") + ",true,'0,100,100'"
+      (new Regex("\\[\\[[^\\]^:]+\\]\\]")).findAllIn(elem.getText).foreach { link =>
+        edges += List(title, stripLink(link), "true", linkColor).mkString(",")
       }
     }
     return (nodes.toList, edges.toList)
   }
 
   def main(args: Array[String]) {
-    var graph = getGraphFromUrl("file:///D:/temp/0t2g/test.html")
+    val graph = getGraphFromUrl("file:///D:/temp/0t2g/test.html")
     val p = new java.io.PrintWriter("D://temp//0t2g//test.gdf")
     p.println("nodedef>name VARCHAR")
-    for (node <- graph._1) {
-      p.println(node)
-    }
+    graph._1.foreach(p.println)
     p.println("edgedef>node1 VARCHAR,node2 VARCHAR,directed BOOLEAN,color VARCHAR")
-    for (edge <- graph._2) {
-      p.println(edge)
-    }
+    graph._2.foreach(p.println)
     p.close
-
   }
 
 }
