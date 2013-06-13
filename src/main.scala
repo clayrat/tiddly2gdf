@@ -20,13 +20,14 @@ object main {
   def getGraphFromUrl(url: String): (List[String], List[String]) = {
     val nodes = new ListBuffer[String]()
     val edges = new ListBuffer[String]()
+    val linkPattern = new Regex("\\[\\[[^\\]^:]+\\]\\]")
     (new HtmlCleaner).clean(new URL(url)).getElementsByName("div", true).foreach { elem =>
       val title = elem.getAttributeByName("title")
       nodes += title
       monoidify(elem.getAttributeByName("tags")).split(" ").foreach { tag =>
         edges += List(title, tag, "true", tagColor).mkString(",")
       }
-      (new Regex("\\[\\[[^\\]^:]+\\]\\]")).findAllIn(elem.getText).foreach { link =>
+      linkPattern.findAllIn(elem.getText).foreach { link =>
         edges += List(title, stripLink(link), "true", linkColor).mkString(",")
       }
     }
